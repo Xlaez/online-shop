@@ -7,6 +7,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes";
 import prodRoutes from "./routes/products.routes";
 import multerOptions from "./libs/multerConfig";
+import compression from "compression";
 
 class Server {
   public app: Application;
@@ -38,19 +39,21 @@ class Server {
     });
     //config
 
+    this.app.use(compression());
     this.app.use(express.json({ limit: "25mb" }));
     this.app.use(express.urlencoded({ limit: "25mb", extended: true }));
+    this.app.set("view engine", "ejs");
     this.app.use(
       "assets/images",
       express.static(path.join(__dirname, "assets", "images"))
     );
+    this.app.use(express.static(path.resolve(process.cwd(), "public")));
     this.app.use(
       multer({
         storage: multerOptions.fileStorage,
         fileFilter: multerOptions.fileFilter,
       }).single("image")
     );
-
     this.app.use(
       cors({
         origin: "*",

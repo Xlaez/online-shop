@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import productModel, { Iproduct } from "../model/productModel";
 import purchaseModel, { Ipurchase } from "../model/purchaseModel";
 import userModel from "../model/userModel";
-
 class productsController {
   constructor() {}
   //Admin functionality
@@ -157,11 +156,11 @@ class productsController {
   };
 
   postOrders = async (req: Request, res: Response) => {
-    const userId = req.get("user-access");
+    const userId = req.get("useraccess");
     try {
       var user = await userModel.findOne({ _id: userId });
       if (!user) return res.status(400).json({ msg: "user not found!" });
-      var populateItems = user.populate("cart.items.prodctId");
+      var populateItems = user.populate("cart.items.productId");
 
       if (!populateItems)
         return res.status(400).json({ msg: "something went wrong" });
@@ -186,6 +185,33 @@ class productsController {
     } catch (err) {
       res.status(500).json(err);
     }
+  };
+
+  viewPurchase = async (req: Request, res: Response) => {
+    var purchases = await purchaseModel.find().sort({ createdAt: "desc" });
+    try {
+      if (!purchases)
+        return res.status(400).json({ status: "none", msg: "no orders yet." });
+
+      let totalOrders: number = 0;
+      let usersWhoOrdered: Array<Ipurchase> = [];
+
+      for (let i = 0; (i = purchases.length); i++) {
+        totalOrders = i + 1;
+        usersWhoOrdered.push(purchases[i].user);
+      }
+
+      res.status(200).json({
+        data: { totalOrders: totalOrders, usersWhoOrdered: usersWhoOrdered },
+      });
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  };
+  sendForm = async (req: Request, res: Response) => {
+    const userId = req.get("useraccess");
+    // var user = await purchaseModel.findOne
+    res.render("payment_card", {});
   };
 }
 
