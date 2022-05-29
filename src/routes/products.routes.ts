@@ -19,7 +19,7 @@ class prodRouter {
       .route("/get")
       .post(prodController.getCart)
       .get(prodController.viewPurchase);
-    this.router.route("/get_form").get(prodController.sendForm);
+    this.router.route("/get_form/:id").get(prodController.sendForm);
     this.router
       .route("/:id")
       .get(prodController.getProduct)

@@ -9,6 +9,7 @@ export interface Iproduct extends mongoose.Document {
   discount: number;
   image: string;
   category: string;
+  newPrice: string;
 }
 
 const schema: any = mongoose.Schema;
@@ -42,11 +43,7 @@ const productSchema = new schema(
       type: Number,
     },
     category: String,
-    userId: {
-      type: schema.Types.ObjectId,
-      ref: "Users",
-      required: true,
-    },
+    newPrice: String,
   },
   {
     timestamps: true,

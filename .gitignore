@@ -4,3 +4,4 @@ assets
 dist
 public
 views
+yarn-error.log

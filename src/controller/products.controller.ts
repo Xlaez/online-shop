@@ -10,12 +10,22 @@ class productsController {
       body: req.body,
       file: req.file,
     };
-    console.log(data.file);
     if (!data.file || !data.body)
       return res.status(400).json({ msg: "Provide data for all fields" });
     try {
+      let newPrice: string;
+      if (data.body.discount > 0) {
+        var discount = data.body.discount;
+        var solve: number = discount / 100;
+        const newAmount: number = solve * Number(data.body.price);
+
+        newPrice = (Number(data.body.price) - newAmount).toString();
+      } else {
+        newPrice = data.body.price;
+      }
       var newProd: Iproduct = new productModel({
         ...data.body,
+        newPrice,
         image: data.file.path,
       });
 
@@ -52,16 +62,7 @@ class productsController {
       if (!product) {
         res.status(400).json({ msg: "Product not found" });
       } else {
-        if (product.discount > 0) {
-          var discount = product.discount;
-          var solve: number = discount / 100;
-          const newAmount: number = solve * Number(product.price);
-          const data = {
-            product,
-            newPrice: (Number(product.price) - newAmount).toString(),
-          };
-          res.status(200).json({ data });
-        }
+        res.status(200).json({ data: product });
       }
     } catch (err) {
       res.status(500).json(err);
@@ -116,7 +117,8 @@ class productsController {
           .json({ msg: "An error occured while adding to cart." });
 
       var result = await user.addToCart(product);
-
+      product.prodNum = product.prodNum - 1;
+      await product.save();
       res.status(201).json({ data: result });
     } catch (err) {
       res.status(500).json(err);
@@ -209,9 +211,32 @@ class productsController {
     }
   };
   sendForm = async (req: Request, res: Response) => {
-    const userId = req.get("useraccess");
-    // var user = await purchaseModel.findOne
-    res.render("payment_card", {});
+    const userId = req.params.id;
+    var user = await userModel.findOne({ _id: userId });
+    try {
+      if (!user) return res.status(400).json({ msg: "user not found" });
+
+      var cart: any = user.cart.items;
+      var quantity = cart.quantity;
+      var productDetails = await productModel
+        .findOne({ _id: cart.productId })
+        .select(["name", "newPrice"]);
+
+      if (!productDetails)
+        return res.status(400).json({ msg: "cannot find user's product" });
+
+      const newPrice: number = Number(productDetails.newPrice);
+      const renderdata = {
+        price: (quantity * newPrice).toFixed(2),
+        productName: productDetails.name,
+        email: user.email,
+        name: user.name,
+        mobile: user.mobile,
+      };
+      res.render("payment_card", { ...renderdata });
+    } catch (err) {
+      res.status(500).json(err);
+    }
   };
 }
 

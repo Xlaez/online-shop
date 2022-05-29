@@ -19,6 +19,7 @@
     "@types/multer": "^1.4.7",
     "@types/nodemailer": "^6.4.4",
     "bcrypt": "^5.0.1",
+    "cloudinary": "^1.30.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "ejs": "^3.1.7",
