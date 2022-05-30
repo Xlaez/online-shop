@@ -47,6 +47,7 @@ const productSchema = new schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
   }
 );
 

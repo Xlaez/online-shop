@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
+import path from "path";
+import fs from "fs";
+import PDFDocument from "pdfkit";
 import productModel, { Iproduct } from "../model/productModel";
 import purchaseModel, { Ipurchase } from "../model/purchaseModel";
 import userModel from "../model/userModel";
+
 class productsController {
   constructor() {}
   //Admin functionality
@@ -132,7 +136,17 @@ class productsController {
       var user = await userModel.findOne({ _id: userId });
       if (!user) return res.status(400).json({ msg: "cannot find user" });
 
+      var product = await productModel.findById(prodId);
+
+      if (!product)
+        return res
+          .status(400)
+          .json({ msg: "An error occured while removing from cart" });
+
+      product.prodNum = product.prodNum + 1;
+
       var success = user.removeFromCart(prodId);
+      await product.save();
       if (!success)
         return res.status(400).json({ msg: "something went wrong." });
 
@@ -162,11 +176,10 @@ class productsController {
     try {
       var user = await userModel.findOne({ _id: userId });
       if (!user) return res.status(400).json({ msg: "user not found!" });
-      var populateItems = user.populate("cart.items.productId");
+      var populateItems = await user.populate("cart.items.productId");
 
       if (!populateItems)
         return res.status(400).json({ msg: "something went wrong" });
-
       const products: any = user.cart.items.map((i: any) => {
         return { quantity: i.quantity, product: { ...i.productId._doc } };
       });
@@ -182,61 +195,62 @@ class productsController {
         var clear = await user.clearCart();
         if (!clear)
           return res.status(400).json({ msg: "canot clear user cart" });
-        return res.status(200).json({ msg: "success", data: clear });
+        return res.status(200).json({ msg: "success", data: order });
       }
     } catch (err) {
       res.status(500).json(err);
     }
   };
 
-  viewPurchase = async (req: Request, res: Response) => {
-    var purchases = await purchaseModel.find().sort({ createdAt: "desc" });
-    try {
-      if (!purchases)
-        return res.status(400).json({ status: "none", msg: "no orders yet." });
+  getInvoice = async (req: Request, res: Response) => {
+    var order = await purchaseModel.findById(req.params.id);
+    if (!order) return res.status(400).json({ msg: "no order's found" });
 
-      let totalOrders: number = 0;
-      let usersWhoOrdered: Array<Ipurchase> = [];
-
-      for (let i = 0; (i = purchases.length); i++) {
-        totalOrders = i + 1;
-        usersWhoOrdered.push(purchases[i].user);
-      }
-
-      res.status(200).json({
-        data: { totalOrders: totalOrders, usersWhoOrdered: usersWhoOrdered },
-      });
-    } catch (err) {
-      res.status(500).json(err);
+    if (order.user.userId.toString() !== req.body.id.toString()) {
+      return res.status(403).json({ msg: "Unauthorised" });
     }
-  };
-  sendForm = async (req: Request, res: Response) => {
-    const userId = req.params.id;
-    var user = await userModel.findOne({ _id: userId });
-    try {
-      if (!user) return res.status(400).json({ msg: "user not found" });
 
-      var cart: any = user.cart.items;
-      var quantity = cart.quantity;
-      var productDetails = await productModel
-        .findOne({ _id: cart.productId })
-        .select(["name", "newPrice"]);
+    const invoiceName = `invoice-${req.params.id.toString()}.pdf`;
+    const invoicePath = path.resolve(
+      process.cwd(),
+      "assets",
+      "data",
+      invoiceName
+    );
 
-      if (!productDetails)
-        return res.status(400).json({ msg: "cannot find user's product" });
+    const pdfDoc = new PDFDocument();
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      'inline; filename=" ' + invoiceName + ' "'
+    );
+    pdfDoc.pipe(fs.createWriteStream(invoicePath));
+    pdfDoc.pipe(res);
 
-      const newPrice: number = Number(productDetails.newPrice);
-      const renderdata = {
-        price: (quantity * newPrice).toFixed(2),
-        productName: productDetails.name,
-        email: user.email,
-        name: user.name,
-        mobile: user.mobile,
-      };
-      res.render("payment_card", { ...renderdata });
-    } catch (err) {
-      res.status(500).json(err);
-    }
+    pdfDoc.fontSize(26).text("Invoice", {
+      underline: true,
+    });
+
+    pdfDoc.text("-----------------------");
+    let totalPrice = 0;
+    order.products.forEach((prod: any) => {
+      totalPrice += prod.quantity * prod.product.price;
+      pdfDoc
+        .fontSize(14)
+        .text(
+          prod.product.name +
+            " --- " +
+            prod.quantity +
+            " x " +
+            "#" +
+            prod.product.price
+        );
+    });
+
+    pdfDoc.text("---");
+    pdfDoc.fontSize(20).text("Total Price: #" + totalPrice);
+
+    pdfDoc.end();
   };
 }
 

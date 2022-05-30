@@ -15,6 +15,10 @@ const purchaseSchema = new schema(
           type: Object,
           required: true,
         },
+        quantity: {
+          type: Number,
+          required: true,
+        },
       },
     ],
     user: {
@@ -31,6 +35,7 @@ const purchaseSchema = new schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
   }
 );
 

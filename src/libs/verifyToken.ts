@@ -11,7 +11,7 @@ export interface IPayload {
 class ValidationToken {
   constructor() {}
 
-  TokenValidation = (req: Request, res: Response, next: NextFunction) => {
+  TokenValidation: any = (req: Request, res: Response, next: NextFunction) => {
     try {
       var token = req.get("Authorization");
       if (!token) {
@@ -24,8 +24,7 @@ class ValidationToken {
           process.env["SECRET_TOKEN"] || "defaultToken"
         ) as IPayload;
         // var tok = payload._id;
-        req.body = payload._id;
-        console.log(req.body);
+        req.body.id = payload._id;
         next();
       }
     } catch (err) {
