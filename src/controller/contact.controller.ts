@@ -15,34 +15,38 @@ class messagesController {
       ...body,
     });
 
-    try {
-      contact = await contact.save();
+    contact = await contact.save();
 
-      if (contact) {
-        var emailVar = await mailFunc({
-          to: body.email,
-          from: process.env.EMAIL_ACCOUNT,
-          subject: "Ecommerce website",
-          html: `
-                    <h3>Notice Of Message</h3>
-                    <br/>
-                    <p> Dear ${body.name}, we have recievd your message and we will get back to you as soon as possible</p>
-                    <br/>
-                    <br/>
-                    <small>Thank You</small>
-                    `,
-        });
-        if (emailVar) return res.status(201).json({ msg: "success" });
-      } else {
-        res.status(400).json({ msg: "an error occured" });
-      }
-    } catch (error) {
-      res.status(400).json(error);
+    // if (contact) {
+    //   var emailVar = await mailFunc({
+    //     to: body.email,
+    //     from: process.env.EMAIL_ACCOUNT,
+    //     subject: "Ecommerce website",
+    //     html: `
+    //               <h3>Notice Of Message</h3>
+    //               <br/>
+    //               <p> Dear ${body.name}, we have recievd your message and we will get back to you as soon as possible</p>
+    //               <br/>
+    //               <br/>
+    //               <small>Thank You</small>
+    //               `,
+    //   });
+    //   if (emailVar) return res.status(201).json({ msg: "success" });
+    // } else {
+    // res.status(400).json({ msg: "an error occured" });
+    // }
+    if (!contact) {
+      res.status(400).json("An error occured");
+    } else {
+      res.status(201).json({ msg: "success" });
     }
   };
 
   getMessage = async (req: Request, res: Response) => {
-    var messages = await contactModel.find().sort({ createdAt: -1 });
+    var messages = await contactModel
+      .find()
+      .sort({ createdAt: -1 })
+      .select(["name", "updatedAt"]);
     try {
       res.status(200).json({ data: messages });
     } catch (e) {

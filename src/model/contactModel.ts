@@ -27,7 +27,7 @@ const contactSchema = new schema(
       required: true,
     },
   },
-  { timeStamps: true }
+  { timestamps: true }
 );
 
 const contactModel = mongoose.model<IContact>("Messages", contactSchema);
