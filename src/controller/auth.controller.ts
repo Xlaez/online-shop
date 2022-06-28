@@ -51,11 +51,14 @@ class userController {
       });
 
       user.password = await user.encryptPassword(req.body.password);
+      user.admin = user.isAdmin(req.body.email);
       let newUser = await user.save();
+
       const data = {
         token: this.getToken(user),
         refreshToken: this.getRefreshToken(user),
         userId: newUser._id,
+        admin: user.admin,
       };
       return res.status(201).json({ data });
     } catch (err) {
@@ -89,6 +92,8 @@ class userController {
           .json({ msg: "A parameter provided is in correct" });
       }
 
+      var admin: Boolean = false;
+
       //create a token
       var token: string = this.getToken(user);
       //get user data
@@ -98,6 +103,7 @@ class userController {
         email: user.email,
         mobile: user.mobile,
         token: token,
+        admin: user.admin,
         refreshToken: this.getRefreshToken(user),
       };
 

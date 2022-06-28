@@ -14,10 +14,18 @@ class authRouter {
     this.router
       .route("/")
       .post(authController.Signup)
-      .get(validationToken.TokenValidation, authController.GetUsers);
+      .get(
+        validationToken.TokenValidation,
+        validationToken.IsAdmin,
+        authController.GetUsers
+      );
     this.router
       .route("/total-users")
-      .get(validationToken.TokenValidation, authController.GetTotalUsers);
+      .get(
+        validationToken.TokenValidation,
+        validationToken.IsAdmin,
+        authController.GetTotalUsers
+      );
     this.router
       .route("/:id")
       .get(validationToken.TokenValidation, authController.GetUser);

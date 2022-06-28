@@ -14,11 +14,23 @@ class contactRouter {
     this.router
       .route("/")
       .post(contactController.postMessages)
-      .get(validationToken.TokenValidation, contactController.getMessage);
+      .get(
+        validationToken.TokenValidation,
+        validationToken.IsAdmin,
+        contactController.getMessage
+      );
     this.router
       .route("/:id")
-      .delete(validationToken.TokenValidation, contactController.deleteMessage)
-      .get(validationToken.TokenValidation, contactController.getSingleMessgae);
+      .delete(
+        validationToken.TokenValidation,
+        validationToken.IsAdmin,
+        contactController.deleteMessage
+      )
+      .get(
+        validationToken.TokenValidation,
+        validationToken.IsAdmin,
+        contactController.getSingleMessgae
+      );
   }
 }
 

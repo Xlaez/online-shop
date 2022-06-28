@@ -7,6 +7,7 @@ export interface Iuser extends mongoose.Document {
   mobile: string;
   email: string;
   password: string;
+  admin: boolean;
   resetToken: string | null;
   resetTokenExpDate: number | null;
   cart: any;
@@ -14,6 +15,7 @@ export interface Iuser extends mongoose.Document {
   validatePassword(password: string): Promise<boolean>;
   addToCart(product: object): Promise<string | boolean>;
   removeFromCart(product: object): Promise<string>;
+  isAdmin(email: string): boolean;
   clearCart: Function;
 }
 
@@ -36,6 +38,10 @@ const userschema = new schema(
       type: String,
       required: true,
       min: 5,
+    },
+    admin: {
+      type: Boolean,
+      default: false,
     },
     resetToken: {
       type: String,
@@ -104,6 +110,15 @@ userschema.methods.removeFromCart = function (productId: any): Promise<string> {
 userschema.methods.clearCart = function (): Function {
   this.cart = { items: [] };
   return this.save();
+};
+userschema.methods.isAdmin = function (email: string): boolean {
+  if (email === "admin2@gmail.com") {
+    this.admin = true;
+
+    return true;
+  } else {
+    return false;
+  }
 };
 const userModel = mongoose.model<Iuser>("Users", userschema);
 

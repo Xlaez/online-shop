@@ -15,6 +15,12 @@ class prodRouter {
       .route("/")
       .post(prodController.createProduct)
       .get(prodController.getProducts);
+    this.router
+      .route("/display")
+      .get(
+        validationToken.TokenValidation,
+        prodController.getProductsForStoreDisplay
+      );
     this.router.route("/exclusive").get(prodController.getExclusiveProducts);
     this.router
       .route("/get")
@@ -24,7 +30,11 @@ class prodRouter {
       .route("/:id")
       .get(prodController.getProduct)
       .put(prodController.editProduct)
-      .delete(validationToken.TokenValidation, prodController.deleteProduct);
+      .delete(
+        validationToken.TokenValidation,
+        validationToken.IsAdmin,
+        prodController.deleteProduct
+      );
     this.router
       .route("/all/category/:category")
       .get(prodController.getProductsCategory);
@@ -42,10 +52,12 @@ class prodRouter {
       .post(validationToken.TokenValidation, prodController.postOrders);
     this.router
       .route("/total/orders")
-      .post(validationToken.TokenValidation, prodController.GetTotalOrders);
-    this.router
-      .route("/invoice/:id")
-      .get(validationToken.TokenValidation, prodController.getInvoice);
+      .post(
+        validationToken.TokenValidation,
+        validationToken.IsAdmin,
+        prodController.GetTotalOrders
+      );
+    this.router.route("/invoice/:id").get(prodController.getInvoice);
   }
 }
 

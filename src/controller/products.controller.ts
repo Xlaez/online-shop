@@ -5,6 +5,10 @@ import PDFDocument from "pdfkit";
 import productModel, { Iproduct } from "../model/productModel";
 import purchaseModel, { Ipurchase } from "../model/purchaseModel";
 import userModel from "../model/userModel";
+import { config } from "dotenv";
+import cloudinaryConfig from "../config/cloudinaryConfig";
+import mailFunc from "../config/mail";
+config({ path: path.resolve(process.cwd(), ".env") });
 
 class productsController {
   constructor() {}
@@ -14,8 +18,12 @@ class productsController {
       body: req.body,
       file: req.file,
     };
+
+    var imageUploaded: any;
     if (!data.file || !data.body)
       return res.status(400).json({ msg: "Provide data for all fields" });
+    imageUploaded = await cloudinaryConfig.uploader.upload(data.file.path);
+
     try {
       let newPrice: string;
       if (data.body.discount > 0) {
@@ -30,7 +38,8 @@ class productsController {
       var newProd: Iproduct = new productModel({
         ...data.body,
         newPrice,
-        image: data.file.path,
+        image: imageUploaded.secure_url,
+        cloudinaryId: imageUploaded.public_id,
       });
 
       newProd = await newProd.save();
@@ -63,6 +72,16 @@ class productsController {
       } else {
         res.status(200).json({ data: products, totalItems });
       }
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  };
+
+  getProductsForStoreDisplay = async (req: Request, res: Response) => {
+    var products = await productModel.find().sort({ createdAt: "desc" });
+
+    try {
+      res.status(200).json({ data: products });
     } catch (err) {
       res.status(500).json(err);
     }
@@ -125,11 +144,14 @@ class productsController {
   getProduct = async (req: Request, res: Response) => {
     try {
       var product = await productModel.findById(req.params.id);
-
+      var isSold = false;
+      if (product?.prodNum === 0) {
+        isSold = true;
+      }
       if (!product) {
         res.status(400).json({ msg: "Product not found" });
       } else {
-        res.status(200).json({ data: product });
+        res.status(200).json({ data: product, soldOut: isSold });
       }
     } catch (err) {
       res.status(500).json(err);
@@ -166,6 +188,11 @@ class productsController {
   deleteProduct = async (req: Request, res: Response) => {
     if (!req.params.id)
       return res.status(400).json({ msg: "provide a valid id param" });
+    var productFetched = await productModel.findById(req.params.id);
+    if (productFetched)
+      //delete image from cloudinary
+      await cloudinaryConfig.uploader.destroy(productFetched._id);
+
     try {
       var product = await productModel.findByIdAndDelete(req.params.id);
 
@@ -267,6 +294,15 @@ class productsController {
         var clear = await user.clearCart();
         if (!clear)
           return res.status(400).json({ msg: "canot clear user cart" });
+        var emailVar = await mailFunc({
+          to: "adminemail@gmail.com",
+          from: process.env.EMAIL_ACCOUNT,
+          subject: "Proof of payment",
+          html: `
+                  ${user.email}has just purchased from your online shop.
+                  visit the website for better details.....<a href="https://localhost:1818/dashboard">click here</a> 
+                  `,
+        });
         return res.status(200).json({ msg: "success", data: order });
       }
     } catch (err) {
@@ -279,9 +315,9 @@ class productsController {
 
     if (!order) return res.status(400).json({ msg: "no order's found" });
 
-    if (order.user.userId.toString() !== req.body.id.toString()) {
-      return res.status(403).json({ msg: "Unauthorised" });
-    }
+    // if (order.user.userId.toString() !== req.body.id.toString()) {
+    //   return res.status(403).json({ msg: "Unauthorised" });
+    // }
 
     const invoiceName = `invoice-${req.params.id.toString()}.pdf`;
     const invoicePath = path.resolve(

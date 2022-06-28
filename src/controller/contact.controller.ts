@@ -17,24 +17,24 @@ class messagesController {
 
     contact = await contact.save();
 
-    // if (contact) {
-    //   var emailVar = await mailFunc({
-    //     to: body.email,
-    //     from: process.env.EMAIL_ACCOUNT,
-    //     subject: "Ecommerce website",
-    //     html: `
-    //               <h3>Notice Of Message</h3>
-    //               <br/>
-    //               <p> Dear ${body.name}, we have recievd your message and we will get back to you as soon as possible</p>
-    //               <br/>
-    //               <br/>
-    //               <small>Thank You</small>
-    //               `,
-    //   });
-    //   if (emailVar) return res.status(201).json({ msg: "success" });
-    // } else {
-    // res.status(400).json({ msg: "an error occured" });
-    // }
+    if (contact) {
+      var emailVar = await mailFunc({
+        to: body.email,
+        from: process.env.EMAIL_ACCOUNT,
+        subject: "Ecommerce website",
+        html: `
+                  <h3>Notice Of Message</h3>
+                  <br/>
+                  <p> Dear ${body.name}, we have recievd your message and we will get back to you as soon as possible</p>
+                  <br/>
+                  <br/>
+                  <small>Thank You</small>
+                  `,
+      });
+      if (emailVar) return res.status(201).json({ msg: "success" });
+    } else {
+      res.status(400).json({ msg: "an error occured" });
+    }
     if (!contact) {
       res.status(400).json("An error occured");
     } else {

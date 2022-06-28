@@ -10,6 +10,7 @@ export interface Iproduct extends mongoose.Document {
   image: string;
   category: string;
   newPrice: string;
+  cloudinaryId: string;
 }
 
 const schema: any = mongoose.Schema;
@@ -38,6 +39,9 @@ const productSchema = new schema(
     image: {
       type: String,
       required: [true, "Most provide an image of type jpeg, jpg or png"],
+    },
+    cloudinaryId: {
+      type: String,
     },
     discount: {
       type: Number,
